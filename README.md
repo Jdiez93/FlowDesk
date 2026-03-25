@@ -1,43 +1,50 @@
-# Astro Starter Kit: Minimal
+🚀 FlowDesk
+FlowDesk es una plataforma moderna de gestión y análisis de flujos de trabajo diseñada para ofrecer una experiencia de usuario rápida, intuitiva y eficiente. Construida con el framework Astro y potenciada por Supabase, la aplicación permite gestionar datos en tiempo real con un rendimiento óptimo.
 
-```sh
-npm create astro@latest -- --template minimal
-```
+✨ Características
+SSR (Server-Side Rendering): Renderizado en el servidor mediante Astro para una velocidad de carga superior.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Autenticación Robusta: Gestión de usuarios segura integrada con Supabase Auth.
 
-## 🚀 Project Structure
+Dashboard de Analíticas: Visualización de datos interactiva utilizando componentes de gráficos optimizados.
 
-Inside of your Astro project, you'll see the following folders and files:
+Base de Datos en Tiempo Real: Persistencia de datos inmediata con PostgreSQL vía Supabase.
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+Diseño Responsivo: Interfaz adaptativa diseñada para ofrecer la mejor experiencia en cualquier dispositivo.
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+🛠️ Stack Tecnológico
+Frontend: Astro + React/Tailwind CSS
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Backend as a Service: Supabase (Auth & Database)
 
-Any static assets, like images, can be placed in the `public/` directory.
+Despliegue: Vercel
 
-## 🧞 Commands
+Gráficos: Recharts / Lucide Icons
 
-All commands are run from the root of the project, from a terminal:
+⚙️ Configuración Local
+Clonar el repositorio:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+Bash
+git clone https://github.com/Jdiez93/FlowDesk.git
+cd FlowDesk
+Instalar dependencias:
 
-## 👀 Want to learn more?
+Bash
+npm install
+Variables de Entorno:
+Crea un archivo .env en la raíz del proyecto y añade tus credenciales:
 
+Fragmento de código
+SUPABASE_URL=tu_url_de_supabase
+SUPABASE_ANON_KEY=tu_llave_anon_de_supabase
+Ejecutar en desarrollo:
+
+Bash
+npm run dev
+📦 Despliegue
+El proyecto está configurado para desplegarse automáticamente en Vercel al hacer push a la rama main.
+
+Nota: Es indispensable configurar las variables de entorno en el panel de Vercel (Settings > Environment Variables) para que el adaptador @astrojs/vercel funcione correctamente con Supabase.
+
+Desarrollado con ❤️ por Jdiez93
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
