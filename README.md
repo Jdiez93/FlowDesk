@@ -1,61 +1,41 @@
-🚀 FlowDesk
-Una plataforma de alto rendimiento para la gestión y analítica de flujos de trabajo, construida con un enfoque en la velocidad de respuesta, integración de datos en tiempo real y una arquitectura moderna de servidor.
+# 🚀 FlowDesk
 
-Live Demo: https://flow-desk-murex.vercel.app/
+**FlowDesk** es una plataforma de alto rendimiento dedicada a la **visualización y gestión de flujos de trabajo**. Construida con un enfoque en la velocidad, el procesamiento en servidor y una experiencia de usuario fluida.
 
-🛠️ Stack Tecnológico
-Este proyecto utiliza herramientas de vanguardia para garantizar escalabilidad y un rendimiento óptimo:
+**Live Demo:** [https://flow-desk-murex.vercel.app/](https://flow-desk-murex.vercel.app/)
 
-Astro: Framework principal para un renderizado híbrido (SSR) ultrarrápido.
+---
 
-Supabase: Backend-as-a-Service para gestión de autenticación y base de datos PostgreSQL.
+## 🛠️ Stack Tecnológico
 
-React: Biblioteca para la construcción de dashboards e interfaces dinámicas.
+Este proyecto utiliza herramientas de vanguardia para maximizar la eficiencia en el desarrollo y la optimización en el cliente:
 
-TypeScript: Tipado estático para asegurar un código robusto y libre de errores.
+* **Astro:** Framework principal para lograr una carga ultrarrápida mediante renderizado híbrido (SSR).
+* **Supabase:** Backend-as-a-Service para la gestión de autenticación y base de datos PostgreSQL.
+* **React:** Biblioteca para la construcción de componentes de interfaz dinámicos y dashboards.
+* **TypeScript:** Tipado estático para garantizar la robustez y escalabilidad del código.
+* **Tailwind CSS:** Framework de utilidades para un diseño moderno, responsivo y mantenible.
 
-Tailwind CSS: Framework de utilidades para un diseño moderno y totalmente responsivo.
+---
 
-✨ Características Principales
-⚡ Server-Side Rendering (SSR): Generación de páginas en el servidor para una entrega inmediata de datos dinámicos.
+## ✨ Características Principales
 
-🔐 Auth Segura: Flujo completo de registro e inicio de sesión gestionado por Supabase.
+* **⚡ Server-Side Rendering (SSR):** Generación de páginas en el servidor para entrega inmediata de datos.
+* **🔐 Autenticación Segura:** Gestión de usuarios e inicio de sesión protegido mediante Supabase Auth.
+* **📊 Dashboard de Analíticas:** Visualización de métricas críticas con componentes interactivos.
+* **📱 Diseño Adaptive:** Interfaz totalmente optimizada para dispositivos móviles, tablets y desktop.
+* **🛡️ Type Safe:** Desarrollo seguro mediante interfaces y tipos personalizados de TypeScript.
 
-📊 Dashboard Interactivo: Visualización de métricas críticas mediante componentes de analítica optimizados.
+---
 
-📱 Diseño Adaptive: Interfaz fluida y optimizada para dispositivos móviles, tablets y desktop.
+## 📂 Estructura del Proyecto
 
-🛡️ Type Safe: Desarrollo protegido mediante interfaces y modelos de datos rigurosos.
-
-📂 Estructura del Proyecto
-Bash
+```bash
 src/
 ├── components/     # Componentes React y Astro (.astro, .tsx)
-├── layouts/        # Plantillas base y envoltorios de página
-├── lib/            # Configuración de clientes (Supabase, etc.)
+├── layouts/        # Plantillas base para las páginas
+├── lib/            # Configuración de clientes (Supabase, API)
 ├── pages/          # Enrutamiento basado en archivos (Astro Router)
-├── styles/         # Directivas globales de Tailwind y CSS
-public/             # Activos estáticos (imágenes, iconos, fuentes)
+├── styles/         # Configuraciones globales de Tailwind
+public/             # Activos estáticos (imágenes, fuentes)
 astro.config.mjs    # Configuración de Astro y adaptadores (Vercel)
-🚀 Instalación y Configuración
-Para replicar este entorno localmente, sigue estos pasos:
-
-Clonar y acceder:
-
-Bash
-git clone https://github.com/Jdiez93/FlowDesk.git
-cd FlowDesk
-Instalar dependencias:
-
-Bash
-npm install
-Variables de Entorno: Crea un archivo .env con tus credenciales de Supabase:
-
-Fragmento de código
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-Levantar el proyecto:
-
-Bash
-npm run dev
-Desarrollado con precisión técnica por Jdiez93
