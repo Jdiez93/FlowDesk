@@ -1,0 +1,360 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro'
+import { supabase } from '../../lib/supabase'
+
+const user = Astro.locals.user!
+
+// Stats
+const [tasksRes, habitsRes, sessionsRes] = await Promise.all([
+  supabase.from('tasks').select('id, status, created_at').eq('user_id', user.id),
+  supabase.from('habits').select('id, name, color, icon').eq('user_id', user.id).eq('is_active', true),
+  supabase.from('focus_sessions').select('id, duration_min, completed').eq('user_id', user.id),
+])
+
+const tasks = tasksRes.data || []
+const habits = habitsRes.data || []
+const sessions = sessionsRes.data || []
+
+const totalTasks    = tasks.length
+const doneTasks     = tasks.filter(t => t.status === 'done').length
+const inProgress    = tasks.filter(t => t.status === 'in_progress').length
+const focusMinutes  = sessions.filter(s => s.completed).reduce((acc, s) => acc + s.duration_min, 0)
+const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0
+
+// Today's habit logs
+const today = new Date().toISOString().split('T')[0]
+const { data: todayLogs } = await supabase
+  .from('habit_logs')
+  .select('habit_id')
+  .eq('user_id', user.id)
+  .eq('logged_date', today)
+
+const completedHabitIds = new Set(todayLogs?.map(l => l.habit_id) || [])
+---
+
+<AppLayout title="Dashboard">
+  <div class="dashboard">
+
+    <!-- Welcome -->
+    <div class="welcome-section">
+      <div>
+        <h2 class="welcome-title">¡Buenos días! 👋</h2>
+        <p class="welcome-sub">Aquí tienes un resumen de tu productividad</p>
+      </div>
+      <a href="/app/kanban" class="fd-btn fd-btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva tarea
+      </a>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(99,102,241,0.1); color: #6366f1;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{doneTasks}<span class="stat-total">/{totalTasks}</span></span>
+          <span class="stat-label">Tareas completadas</span>
+        </div>
+        <div class="stat-progress">
+          <div class="stat-progress-fill" style={`width: ${completionRate}%; background: #6366f1`}></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(245,158,11,0.1); color: #f59e0b;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{focusMinutes}<span class="stat-unit">min</span></span>
+          <span class="stat-label">Tiempo en foco</span>
+        </div>
+        <div class="stat-progress">
+          <div class="stat-progress-fill" style={`width: ${Math.min(focusMinutes / 120 * 100, 100)}%; background: #f59e0b`}></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(16,185,129,0.1); color: #10b981;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{completedHabitIds.size}<span class="stat-total">/{habits.length}</span></span>
+          <span class="stat-label">Hábitos hoy</span>
+        </div>
+        <div class="stat-progress">
+          <div class="stat-progress-fill" style={`width: ${habits.length > 0 ? (completedHabitIds.size / habits.length * 100) : 0}%; background: #10b981`}></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(6,182,212,0.1); color: #06b6d4;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="12"/><rect x="17" y="3" width="5" height="15"/></svg>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{inProgress}</span>
+          <span class="stat-label">En progreso</span>
+        </div>
+        <div class="stat-progress">
+          <div class="stat-progress-fill" style={`width: ${totalTasks > 0 ? (inProgress / totalTasks * 100) : 0}%; background: #06b6d4`}></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom grid -->
+    <div class="bottom-grid">
+
+      <!-- Quick actions -->
+      <div class="fd-card quick-actions-card">
+        <h3 class="card-title">Acceso rápido</h3>
+        <div class="quick-actions">
+          <a href="/app/kanban" class="quick-action">
+            <span class="qa-icon" style="background: rgba(99,102,241,0.1);">📋</span>
+            <span class="qa-label">Kanban Board</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+          <a href="/app/habits" class="quick-action">
+            <span class="qa-icon" style="background: rgba(16,185,129,0.1);">✅</span>
+            <span class="qa-label">Hábitos del día</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+          <a href="/app/focus" class="quick-action">
+            <span class="qa-icon" style="background: rgba(245,158,11,0.1);">⏱️</span>
+            <span class="qa-label">Modo Focus</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Habits today -->
+      <div class="fd-card habits-today-card">
+        <div class="card-header">
+          <h3 class="card-title">Hábitos de hoy</h3>
+          <a href="/app/habits" class="card-link">Ver todos</a>
+        </div>
+        {habits.length === 0 ? (
+          <div class="empty-state">
+            <span>No tienes hábitos activos</span>
+            <a href="/app/habits" class="fd-btn fd-btn-primary" style="margin-top:12px; font-size:0.8rem; padding: 8px 14px;">
+              Crear hábito
+            </a>
+          </div>
+        ) : (
+          <div class="habits-list">
+            {habits.slice(0, 5).map(habit => (
+              <div class="habit-row">
+                <span class="habit-icon">{habit.icon}</span>
+                <span class="habit-name">{habit.name}</span>
+                <div class={`habit-check ${completedHabitIds.has(habit.id) ? 'checked' : ''}`}>
+                  {completedHabitIds.has(habit.id) && (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+    </div>
+  </div>
+</AppLayout>
+
+<style>
+  .dashboard { display: flex; flex-direction: column; gap: 24px; }
+
+  .welcome-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .welcome-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--fd-text);
+  }
+
+  .welcome-sub { color: var(--fd-text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .stat-card {
+    background: var(--fd-surface);
+    border: 1px solid var(--fd-border);
+    border-radius: var(--fd-radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all var(--fd-transition);
+  }
+
+  .stat-card:hover {
+    border-color: var(--fd-border-hover);
+    box-shadow: var(--fd-shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--fd-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-body { display: flex; flex-direction: column; gap: 2px; }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--fd-text);
+    line-height: 1;
+  }
+
+  .stat-total, .stat-unit {
+    font-size: 1rem;
+    color: var(--fd-text-muted);
+    font-weight: 500;
+  }
+
+  .stat-label { font-size: 0.8rem; color: var(--fd-text-muted); font-weight: 500; }
+
+  .stat-progress {
+    height: 4px;
+    background: var(--fd-surface-2);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .stat-progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.6s ease;
+  }
+
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .fd-card { padding: 20px; }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--fd-text);
+    margin-bottom: 16px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .card-link {
+    font-size: 0.8rem;
+    color: var(--fd-primary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .quick-actions { display: flex; flex-direction: column; gap: 8px; }
+
+  .quick-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--fd-radius-md);
+    text-decoration: none;
+    color: var(--fd-text);
+    transition: background var(--fd-transition);
+  }
+
+  .quick-action:hover { background: var(--fd-surface-2); }
+
+  .qa-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .qa-label { flex: 1; font-size: 0.875rem; font-weight: 500; }
+
+  .quick-action svg { color: var(--fd-text-subtle); }
+
+  .habits-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .habit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--fd-border);
+  }
+
+  .habit-row:last-child { border-bottom: none; }
+
+  .habit-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+
+  .habit-name { flex: 1; font-size: 0.875rem; color: var(--fd-text); }
+
+  .habit-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--fd-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all var(--fd-transition);
+  }
+
+  .habit-check.checked {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    color: var(--fd-text-muted);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  @media (max-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .bottom-grid { grid-template-columns: 1fr; }
+    .welcome-section { flex-direction: column; align-items: flex-start; }
+  }
+</style>

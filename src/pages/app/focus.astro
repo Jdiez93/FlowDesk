@@ -1,0 +1,30 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro'
+import FocusTimer from '../../components/focus/FocusTimer.tsx'
+import { supabase } from '../../lib/supabase'
+
+const user = Astro.locals.user!
+
+const { data: tasks } = await supabase
+  .from('tasks')
+  .select('id, title, status, project_id')
+  .eq('user_id', user.id)
+  .neq('status', 'done')
+  .order('created_at', { ascending: false })
+
+const { data: sessions } = await supabase
+  .from('focus_sessions')
+  .select('*')
+  .eq('user_id', user.id)
+  .order('started_at', { ascending: false })
+  .limit(10)
+---
+
+<AppLayout title="Focus">
+  <FocusTimer
+    client:load
+    tasks={tasks || []}
+    sessions={sessions || []}
+    userId={user.id}
+  />
+</AppLayout>

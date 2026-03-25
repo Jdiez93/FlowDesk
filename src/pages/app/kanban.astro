@@ -1,0 +1,29 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro'
+import KanbanBoard from '../../components/kanban/KanbanBoard.tsx'
+import { supabase } from '../../lib/supabase'
+
+const user = Astro.locals.user!
+
+const { data: projects } = await supabase
+  .from('projects')
+  .select('*')
+  .eq('user_id', user.id)
+  .eq('is_archived', false)
+  .order('created_at', { ascending: true })
+
+const { data: tasks } = await supabase
+  .from('tasks')
+  .select('*')
+  .eq('user_id', user.id)
+  .order('order_index', { ascending: true })
+---
+
+<AppLayout title="Kanban">
+  <KanbanBoard
+    client:load
+    projects={projects || []}
+    tasks={tasks || []}
+    userId={user.id}
+  />
+</AppLayout>

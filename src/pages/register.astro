@@ -1,0 +1,446 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro'
+
+const user = Astro.locals.user
+if (user) return Astro.redirect('/app')
+---
+
+<PublicLayout title="Crear cuenta">
+  <div class="auth-page">
+
+    <div class="auth-left">
+      <div class="auth-left-inner">
+        <div class="brand">
+          <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="#6366f1"/>
+            <path d="M8 10h10M8 16h16M8 22h12" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <span>FlowDesk</span>
+        </div>
+        <div class="auth-hero">
+          <h1>Empieza hoy,<br/><em>gratis.</em></h1>
+          <p>Únete a miles de personas que ya usan FlowDesk para ser más productivos cada día.</p>
+        </div>
+        <div class="auth-steps">
+          <div class="step"><span class="step-num">1</span><span>Crea tu cuenta en segundos</span></div>
+          <div class="step"><span class="step-num">2</span><span>Configura tus proyectos y hábitos</span></div>
+          <div class="step"><span class="step-num">3</span><span>Empieza a fluir con tu productividad</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-right">
+      <div class="auth-form-container">
+        <div class="auth-form-header">
+          <h2>Crear cuenta</h2>
+          <p>Es gratis, siempre lo será</p>
+        </div>
+
+        <div id="auth-error" class="auth-alert" style="display:none"></div>
+        <div id="auth-success" class="auth-alert auth-alert-success" style="display:none"></div>
+
+        <form id="register-form" class="auth-form" novalidate>
+          <div class="form-group">
+            <label class="fd-label" for="fullname">Nombre completo</label>
+            <input class="fd-input" type="text" id="fullname" placeholder="Tu nombre" required autocomplete="name"/>
+          </div>
+
+          <div class="form-group">
+            <label class="fd-label" for="email">Email</label>
+            <input class="fd-input" type="email" id="email" placeholder="tu@email.com" required autocomplete="email"/>
+          </div>
+
+          <div class="form-group">
+            <label class="fd-label" for="password">Contraseña</label>
+            <div class="input-wrapper">
+              <input class="fd-input" type="password" id="password" placeholder="Mínimo 8 caracteres" required autocomplete="new-password"/>
+              <button type="button" class="toggle-password" id="togglePassword">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="password-strength" id="strength-bar">
+              <div class="strength-fill" id="strength-fill"></div>
+            </div>
+            <span class="strength-label" id="strength-label"></span>
+          </div>
+
+          <button type="submit" class="fd-btn fd-btn-primary submit-btn" id="submit-btn">
+            <span id="btn-text">Crear cuenta gratis</span>
+            <span id="btn-loader" style="display:none">
+              <svg class="spinner" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="40" stroke-dashoffset="10"/>
+              </svg>
+              Creando cuenta...
+            </span>
+          </button>
+        </form>
+
+        
+
+        <p class="auth-switch">
+          ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</PublicLayout>
+
+<script>
+  import { supabase } from '../lib/supabase'
+
+  // Toggle password
+  document.getElementById('togglePassword')?.addEventListener('click', () => {
+    const input = document.getElementById('password') as HTMLInputElement
+    input.type = input.type === 'password' ? 'text' : 'password'
+  })
+
+  // Password strength
+  const passwordInput = document.getElementById('password') as HTMLInputElement
+  const strengthFill = document.getElementById('strength-fill')!
+  const strengthLabel = document.getElementById('strength-label')!
+
+  passwordInput?.addEventListener('input', () => {
+    const val = passwordInput.value
+    let score = 0
+    if (val.length >= 8) score++
+    if (/[A-Z]/.test(val)) score++
+    if (/[0-9]/.test(val)) score++
+    if (/[^A-Za-z0-9]/.test(val)) score++
+
+    const levels = ['', 'Débil', 'Regular', 'Buena', 'Fuerte']
+    const colors = ['', '#ef4444', '#f59e0b', '#3b82f6', '#10b981']
+    const widths = ['0%', '25%', '50%', '75%', '100%']
+
+    strengthFill.style.width = widths[score]
+    strengthFill.style.background = colors[score]
+    strengthLabel.textContent = score > 0 ? `Contraseña ${levels[score]}` : ''
+    strengthLabel.style.color = colors[score]
+  })
+
+  
+
+  // Register form
+  const form = document.getElementById('register-form') as HTMLFormElement
+  const errorEl = document.getElementById('auth-error')!
+  const successEl = document.getElementById('auth-success')!
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement
+  const btnText = document.getElementById('btn-text')!
+  const btnLoader = document.getElementById('btn-loader')!
+
+  function setLoading(v: boolean) {
+    submitBtn.disabled = v
+    btnText.style.display = v ? 'none' : 'inline'
+    btnLoader.style.display = v ? 'inline-flex' : 'none'
+  }
+
+  function showError(msg: string) {
+    errorEl.textContent = msg
+    errorEl.style.display = 'block'
+    successEl.style.display = 'none'
+  }
+
+  function showSuccess(msg: string) {
+    successEl.textContent = msg
+    successEl.style.display = 'block'
+    errorEl.style.display = 'none'
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const fullname = (document.getElementById('fullname') as HTMLInputElement).value.trim()
+    const email    = (document.getElementById('email') as HTMLInputElement).value.trim()
+    const password = (document.getElementById('password') as HTMLInputElement).value
+
+    if (!fullname || !email || !password) return showError('Completa todos los campos.')
+    if (password.length < 8) return showError('La contraseña debe tener mínimo 8 caracteres.')
+
+    setLoading(true)
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullname } }
+    })
+
+    if (error) {
+      setLoading(false)
+      if (error.message.includes('already registered')) return showError('Este email ya está registrado.')
+      return showError(error.message)
+    }
+
+    if (data.session) {
+      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+      document.cookie = `sb-refresh-token=${data.session.refresh_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+      showSuccess('¡Cuenta creada! Redirigiendo...')
+      setTimeout(() => window.location.href = '/app', 800)
+    } else {
+      setLoading(false)
+      showSuccess('¡Revisa tu email para confirmar tu cuenta!')
+    }
+  })
+</script>
+
+<style>
+  .auth-page {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100dvh;
+  }
+
+  .auth-left {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+  }
+
+  .auth-left::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 20%, rgba(99,102,241,0.3) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(6,182,212,0.2) 0%, transparent 60%);
+  }
+
+  .auth-left-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 420px;
+    width: 100%;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 64px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: white;
+  }
+
+  .auth-hero {
+    margin-bottom: 48px;
+  }
+
+  .auth-hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    font-weight: 800;
+    color: white;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+
+  .auth-hero h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .auth-hero p {
+    color: #a5b4fc;
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .auth-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #c7d2fe;
+    font-size: 0.9rem;
+  }
+
+  .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(99,102,241,0.4);
+    border: 1px solid rgba(165,180,252,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #a5b4fc;
+    flex-shrink: 0;
+  }
+
+  .auth-right {
+    background: var(--fd-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 32px;
+  }
+
+  .auth-form-container {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .auth-form-header {
+    margin-bottom: 32px;
+  }
+
+  .auth-form-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--fd-text);
+    margin-bottom: 6px;
+  }
+
+  .auth-form-header p {
+    color: var(--fd-text-muted);
+    font-size: 0.9rem;
+  }
+
+  .auth-alert {
+    padding: 12px 16px;
+    border-radius: var(--fd-radius-md);
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+
+  .auth-alert-success {
+    background: rgba(16,185,129,0.1);
+    color: #10b981;
+    border-color: rgba(16,185,129,0.2);
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form-group { display: flex; flex-direction: column; }
+
+  .input-wrapper { position: relative; }
+  .input-wrapper .fd-input { padding-right: 44px; }
+
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--fd-text-muted);
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    transition: color var(--fd-transition);
+  }
+  .toggle-password:hover { color: var(--fd-text); }
+
+  .password-strength {
+    height: 4px;
+    background: var(--fd-border);
+    border-radius: 9999px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .strength-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 9999px;
+    transition: width 0.3s ease, background 0.3s ease;
+  }
+
+  .strength-label {
+    font-size: 0.75rem;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .submit-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 13px;
+    font-size: 0.95rem;
+    margin-top: 4px;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    color: var(--fd-text-subtle);
+    font-size: 0.8rem;
+  }
+
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--fd-border);
+  }
+
+  .google-btn {
+    width: 100%;
+    justify-content: center;
+    background: var(--fd-surface);
+    border: 1.5px solid var(--fd-border);
+    color: var(--fd-text);
+    padding: 13px;
+  }
+
+  .google-btn:hover {
+    background: var(--fd-surface-2);
+    border-color: var(--fd-border-hover);
+  }
+
+  .auth-switch {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.875rem;
+    color: var(--fd-text-muted);
+  }
+
+  .auth-switch a {
+    color: var(--fd-primary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .auth-switch a:hover { text-decoration: underline; }
+
+  @media (max-width: 768px) {
+    .auth-page { grid-template-columns: 1fr; }
+    .auth-left { display: none; }
+    .auth-right { padding: 40px 24px; }
+  }
+</style>
